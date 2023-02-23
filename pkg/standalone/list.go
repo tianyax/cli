@@ -79,7 +79,12 @@ func List() ([]ListOutput, error) {
 
 			argumentsMap := make(map[string]string)
 			for i := 1; i < len(cmdLineItems)-1; i += 2 {
-				argumentsMap[cmdLineItems[i]] = cmdLineItems[i+1]
+				if item := cmdLineItems[i+1]; strings.HasPrefix(item, "--") {
+					argumentsMap[cmdLineItems[i]] = "true"
+					i--
+				} else {
+					argumentsMap[cmdLineItems[i]] = item
+				}
 			}
 
 			httpPort := getIntArg(argumentsMap, "--dapr-http-port", runtime.DefaultDaprHTTPPort)

@@ -97,6 +97,38 @@ func TestStandaloneList(t *testing.T) {
 		cmd.Process.Kill()
 	})
 
+	t.Run("daprd instance in list when dapr run use bool parameter", func(t *testing.T) {
+		homeDir, err := os.UserHomeDir()
+		require.NoError(t, err)
+
+		path := filepath.Join(homeDir, ".dapr")
+		binPath := filepath.Join(path, "bin")
+		daprdPath := filepath.Join(binPath, "daprd")
+
+		if runtime.GOOS == "windows" {
+			daprdPath += ".exe"
+		}
+
+		cmd := exec.Command(daprdPath, "--app-id", "daprd_e2e_list", "--dapr-http-port", "3555", "--dapr-grpc-port", "4555", "--app-port", "0", "--enable-app-health-check")
+		cmd.Start()
+
+		output, err := cmdList("")
+		t.Log(output)
+		require.NoError(t, err, "dapr list failed with daprd instance")
+		listOutputCheck(t, output, false)
+
+		// TODO: remove this condition when `dapr stop` starts working for Windows.
+		// See https://github.com/dapr/cli/issues/1034.
+		if runtime.GOOS != "windows" {
+			output, err = cmdStopWithAppID("daprd_e2e_list")
+			t.Log(output)
+			require.NoError(t, err, "dapr stop failed")
+			assert.Contains(t, output, "app stopped successfully: daprd_e2e_list")
+		}
+
+		cmd.Process.Kill()
+	})
+
 	t.Run("dashboard instance should not be listed", func(t *testing.T) {
 		// TODO: remove this after figuring out the fix.
 		// The issue is that the dashboard instance does not gets killed when the app is stopped.
