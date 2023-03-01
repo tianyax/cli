@@ -171,6 +171,23 @@ jobs:
           export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
           make e2e-build-run-sh
         shell: bash
+      - name: Run E2E tests with Containerd - MacOS
+        if: matrix.os == 'macos-latest' && matrix.dapr_install_mode == 'complete'
+        env:
+          CONTAINER_RUNTIME: 'containerd'
+          E2E_SH_TEST_TIMEOUT: ${{ env.E2E_SH_TEST_TIMEOUT }}
+        run: |
+          sudo rm -rf `brew --cache`
+          brew upgrade
+          brew install colima
+          colima nerdctl install
+          colima start --runtime containerd
+          # start run test
+          export TEST_OUTPUT_FILE=$GITHUB_WORKSPACE/test-e2e-standalone.json
+          echo "TEST_OUTPUT_FILE=$TEST_OUTPUT_FILE" >> $GITHUB_ENV
+          export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          make e2e-build-run-sh
+        shell: bash
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@master
